@@ -371,18 +371,57 @@ typical word processor."
       (emacs-lisp . t)
       (gnuplot . t)
       (haskell . nil)
+      (racket . t)
       (latex . t)
       (ledger . t)
       (ocaml . nil)
       (octave . t)
       (plantuml . t)
+      (mermaid . t)
       (python . t)
+      (jinja2 . t)
       (ruby . t)
       (screen . nil)
       (sh . t) ;; obsolete
       (shell . t)
       (sql . t)
       (sqlite . t)))))
+
+(setq org-confirm-babel-evaluate nil)
+
+
+(with-eval-after-load 'org
+(when (maybe-require-package 'org-bullets)
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1)))
+  (setq org-bullets-bullet-list '("◉" "○" "✸" "✿" "✜" "◆" "▶"))))
+
+(use-package ob-racket
+  :load-path "~/.emacs.d/lisp/custom_els/ob-racket"
+  :after org
+  )
+
+(when (maybe-require-package 'ob-mermaid)
+  (setq ob-mermaid-cli-path "/home/exp1y470/.asdf/shims/mmdc"))
+
+(setq org-export-babel-evaluate 'inline-only)
+;; use imagemagick to preview latex
+(setq org-latex-create-formula-image-program 'imagemagick)
+;; set up tikz as one of the default packages for LaTeX
+(setq org-latex-packages-alist
+      (quote (("" "color" t)
+              ("" "minted" t)
+              ("" "parskip" t)
+              ("" "tikz" t))))
+(setq org-confirm-babel-evaluate nil)
+
+
+;; Activate eglot for LaTeX mode
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '((latex-mode) . ("texlab")))
+  (add-hook 'LaTex-mode-hook 'eglot-ensure)
+  (add-hook 'LaTex-mode-hook 'company-mode)
+  (add-hook 'Latex-mode-hook 'flycheck-mode))
+
 
 
 (provide 'init-org)
