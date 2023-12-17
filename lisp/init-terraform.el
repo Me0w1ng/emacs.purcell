@@ -13,6 +13,12 @@
       (reformatter-define terraform-format
         :program "terraform" :args '("fmt" "-")))))
 
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs '((terraform-mode) . ("terraform-ls" "serve")))
+  (add-hook 'terraform-mode-hook 'eglot-ensure)
+  (add-hook 'terraform-mode-hook 'company-mode)
+  (add-hook 'terraform-mode-hook 'flycheck-mode)
+  (add-hook 'terraform-mode-hook 'terraform-doc-mode))
+
 (provide 'init-terraform)
-;;; init-terraform.el ends here
 ;;; init-terraform.el ends here

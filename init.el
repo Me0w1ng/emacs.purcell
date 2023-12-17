@@ -96,6 +96,7 @@
 (require 'init-haml)
 (require 'init-http)
 (require 'init-python)
+(require 'init-racket)
 (require 'init-haskell)
 (require 'init-elm)
 (require 'init-purescript)
