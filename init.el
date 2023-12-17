@@ -31,6 +31,12 @@
             (lambda () (setq gc-cons-threshold normal-gc-cons-threshold))))
 
 
+;; Process performance tuning
+
+(setq read-process-output-max (* 4 1024 1024))
+(setq process-adaptive-read-buffering nil)
+
+
 ;; Bootstrap config
 
 
@@ -113,10 +119,12 @@
 (require 'init-terraform)
 (require 'init-nix)
 (maybe-require-package 'nginx-mode)
+(maybe-require-package 'just-mode)
+(maybe-require-package 'justl)
 
 (require 'init-paredit)
 (require 'init-lisp)
-(require 'init-slime)
+(require 'init-sly)
 (require 'init-clojure)
 (require 'init-clojure-cider)
 (require 'init-common-lisp)
@@ -131,6 +139,8 @@
 
 (require 'init-ledger)
 (require 'init-lua)
+(require 'init-uiua)
+(require 'init-terminals)
 
 ;; Extra packages which don't require any configuration
 
