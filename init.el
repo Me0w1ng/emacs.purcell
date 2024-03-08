@@ -46,9 +46,10 @@
 ;; General performance tuning
 (when (require-package 'gcmh)
   (setq gcmh-high-cons-threshold (* 128 1024 1024))
-  (add-hook 'after-init-hook 'gcmh-mode)
-  (with-eval-after-load 'diminish
-    (diminish 'gcmh-mode)))
+  (add-hook 'after-init-hook (lambda ()
+                               (gcmh-mode)
+                               (diminish 'gcmh-mode))))
+
 (setq jit-lock-defer-time 0)
 
 
@@ -131,7 +132,6 @@
 (require 'init-sly)
 (require 'init-clojure)
 (require 'init-clojure-cider)
-(require 'init-common-lisp)
 
 (when *spell-check-support-enabled*
   (require 'init-spelling))
