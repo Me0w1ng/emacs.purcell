@@ -385,7 +385,8 @@ typical word processor."
       (sh . t) ;; obsolete
       (shell . t)
       (sql . t)
-      (sqlite . t)))))
+      (sqlite . t)
+      (restclient . t)))))
 
 (setq org-confirm-babel-evaluate nil)
 

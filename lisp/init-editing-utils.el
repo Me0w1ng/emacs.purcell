@@ -61,9 +61,9 @@
     (vlf file)))
 
 
-;;; A simple visible bell which works in all terminal types
-(require-package 'mode-line-bell)
-(add-hook 'after-init-hook 'mode-line-bell-mode)
+; ;;; A simple visible bell which works in all terminal types
+; (require-package 'mode-line-bell)
+; (add-hook 'after-init-hook 'mode-line-bell-mode)
 
 
 

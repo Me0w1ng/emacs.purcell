@@ -76,19 +76,18 @@
   (add-hook 'jinja2-mode-hook 'eglot-ensure)
   (add-hook 'jinja2-mode-hook 'flycheck-mode))
 
+; (use-package pyvenv
+;   :ensure t
+;   :config
+;   (pyvenv-mode t)
 
-(use-package pyvenv
-  :ensure t
-  :config
-  (pyvenv-mode t)
-
-  ;; Set correct Python interpreter
-  (setq pyvenv-post-activate-hooks
-        (list (lambda ()
-                (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python3")))))
-  (setq pyvenv-post-deactivate-hooks
-        (list (lambda ()
-                (setq python-shell-interpreter "python3")))))
+;   ;; Set correct Python interpreter
+;   (setq pyvenv-post-activate-hooks
+;         (list (lambda ()
+;                 (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python")))))
+;   (setq pyvenv-post-deactivate-hooks
+;         (list (lambda ()
+;                 (setq python-shell-interpreter "python3")))))
 
 (provide 'init-python)
 ;;; init-python.el ends here
