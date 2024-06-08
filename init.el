@@ -23,6 +23,7 @@
 
 
 ;; Adjust garbage collection threshold for early startup (see use of gcmh below)
+
 (setq gc-cons-threshold (* 128 1024 1024))
 
 
@@ -34,7 +35,6 @@
 
 ;; Bootstrap config
 
-
 (setq custom-file (locate-user-emacs-file "custom.el"))
 (require 'init-utils)
 (require 'init-site-lisp) ;; Must come before elpa, as it may provide package.el
@@ -44,6 +44,7 @@
 
 
 ;; General performance tuning
+
 (when (require-package 'gcmh)
   (setq gcmh-high-cons-threshold (* 128 1024 1024))
   (add-hook 'after-init-hook (lambda ()
@@ -54,13 +55,16 @@
 
 
 ;; Allow users to provide an optional "init-preload-local.el"
+
 (require 'init-preload-local nil t)
 
 ;; Load configs for specific features and modes
+
 (require-package 'diminish)
 (maybe-require-package 'scratch)
 (require-package 'command-log-mode)
 
+(require 'init-autoupdate)
 (require 'init-frame-hooks)
 (require 'init-xterm)
 (require 'init-themes)
@@ -171,8 +175,8 @@
   (require 'init-treesitter))
 
 
-
 ;; Allow access from emacsclient
+
 (add-hook 'after-init-hook
           (lambda ()
             (require 'server)
@@ -180,13 +184,16 @@
               (server-start))))
 
 ;; Variables configured via the interactive 'customize' interface
+
 (when (file-exists-p custom-file)
   (load custom-file))
 
 ;; Locales (setting them earlier in this file doesn't work in X)
+
 (require 'init-locales)
 
 ;; Allow users to provide an optional "init-local" containing personal settings
+
 (require 'init-local nil t)
 
 (provide 'init)
