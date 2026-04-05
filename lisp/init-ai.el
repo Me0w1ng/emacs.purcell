@@ -4,19 +4,30 @@
 
 (require 'auth-source)
 (require 'org-clock)
-
-;; (setq epa-file-cache-passphrase-for-symmetric-encryption t)
-;; (setq epa-file-cache-passphrase-for-symmetric-encryption t) ; Cache the pass
-(setq auth-source-debug t) ; Helps us see what's happening in *Messages*
-(setq epa-pinentry-mode 'loopback) ; Force Emacs to ask for password in the minibuffer
-
-(setq auth-sources '("~/.authinfo.gpg"))
 (require 'epa-file)
+
+
+
+
+
+;; ================= AUTHENTICATION & GPG =================
+;; Cache the GPG passphrase for symmetric encryption
+(setq epa-file-cache-passphrase-for-symmetric-encryption t)
+;; Enable verbose logging for auth-source diagnostics (check *Messages*)
+(setq auth-source-debug t)
+;; Force Emacs to prompt for passwords in the minibuffer instead of GUI pinentry
+(setq epa-pinentry-mode 'loopback)
+;; Define GPG-encrypted authinfo file as the sole credential source
+(setq auth-sources '("~/.authinfo.gpg"))
+;; Enable EPA file handling for transparent GPG decryption
 (epa-file-enable)
 
 
 
-;; 1. Helper to pull the key from your GPG-encrypted authinfo ~/.authinfo.gpg
+
+
+;; ================= HELPER FUNCTIONS =================
+;; Helper to pull AI API keys from GPG-encrypted authinfo
 (defun my/get-ai-key (host)
   "Retrieve the secret for HOST from auth-source."
   (let ((match (auth-source-search :host host :user "apikey" :require '(:secret))))
@@ -26,114 +37,94 @@
       (error "Could not find apikey for %s in ~/.authinfo.gpg" host))))
 
 
-;; 2. Vterm Setup
+
+
+
+;; ================= TERMINAL BACKEND =================
 (require-package 'vterm)
 (use-package vterm
   :ensure t
-  :config (setq vterm-always-compile-module t))
+  :config
+  ;; Always compile the vterm module on load/update
+  (setq vterm-always-compile-module t))
 
 
 
-;; 3. GPTel Configuration (Optimized for OpenRouter)
+
+
+;; ================= LLM CLIENT (GPTEL) =================
 (use-package gptel
   :ensure t
+  ;; ================= KEYBINDINGS =================
   :bind (("C-c g t" . gptel-send)
          ("C-c g m" . gptel-menu)
          ("C-c g b" . gptel))
   :config
+  ;; ================= CORE BACKEND =================
   (setq gptel-backend
         (gptel-make-openai "OpenRouter"
           :host "openrouter.ai"
           :endpoint "/api/v1/chat/completions"
           :stream t
           :key (lambda () (my/get-ai-key "openrouter.ai"))
-          ;; 1. Add a quote here: '
-          ;; 2. Remove "openrouter/" from the string
+          ;; List of available models
           :models '("qwen/qwen3.6-plus:free"
                     "google/gemini-pro-1.5")))
 
-  ;; Match the string exactly as it appears in the :models list above
+  ;; ================= DEFAULTS & CONTEXT =================
+  ;; Set the default model (must match exactly one in the :models list above)
   (setq-default gptel-model "qwen/qwen3.6-plus:free")
+  ;; Enable branching context tracking for Org mode
   (setq gptel-org-branching-context t))
 
 
-;; 4. Aidermacs Configuration
+
+
+
+;; ================= AI CODING ASSISTANT (AIDERMACS) =================
+;; https://aider.chat/docs/install/optional.html
+;; https://aider.chat/docs/usage.html
 (require-package 'aidermacs)
 (use-package aidermacs
   :ensure t
+  ;; ================= KEYBINDINGS =================
   :bind (("C-c C-a r" . aidermacs-run)
-         ("C-c C-a a" . aidermacs-add-current-file))
+         ;; Transient menu recommended for faster access to all commands
+         ("C-c C-a a" . aidermacs-transient-menu))
   :config
-  ;; Note the specific OpenRouter model string
-  (setq aidermacs-args '("--model" "openrouter/qwen/qwen3.6-plus:free"))
-  (setq aidermacs-backend 'vterm)
-  ;; CRITICAL: Aider needs OPENROUTER_API_KEY for these models
+  ;; ================= CORE =================
+  (setq aidermacs-backend 'vterm)      ; Use vterm as the terminal backend
+  (setq aidermacs-program "aider")     ; Executable name (adjust if in a venv/path)
+
+  ;; ================= MODEL CONFIG =================
+  (setq aidermacs-main-model      "openrouter/qwen/qwen3.6-plus:free") ; Primary coding model
+  (setq aidermacs-weak-model      "openrouter/qwen/qwen3.6-plus:free") ; Commit messages & summaries
+  (setq aidermacs-architect-model "openrouter/qwen/qwen3.6-plus:free") ; High-level planning & refactoring
+
+  ;; [UNUSED] Raw CLI override (kept for reference)
+  ;; (setq aidermacs-args '("--model" "openrouter/qwen/qwen3.6-plus:free"))
+
+  ;; ================= BEHAVIOR & MODES =================
+  (setq aidermacs-default-chat-mode 'architect)   ; Best for complex refactoring
+  (setq aidermacs-auto-commits nil)               ; Manual review before committing
+  (setq aidermacs-auto-accept-architect nil)      ; Manual approval in architect mode
+  (setq aidermacs-subtree-only t)                 ; Scope limiter for monorepos/large trees
+  (setq aidermacs-exit-kills-buffer t)            ; Auto-cleanup buffer on session end
+
+  ;; ================= UI & REVIEW =================
+  (setq aidermacs-use-ediff t) ; Highly recommended: diff AI changes using Emacs Ediff
+
+  ;; ================= ADVANCED / UNUSED =================
+  ;; External YAML config (overrides most Emacs variables if set)
+  ;; (setq aidermacs-config-file "~/.aider.conf.yml")
+  ;; Pass arbitrary CLI flags directly to the aider process
+  ;; (setq aidermacs-extra-args '("--dark-mode"))
+
+  ;; ================= AUTHENTICATION =================
+  ;; Export API key to environment for aider CLI
   (setenv "OPENROUTER_API_KEY" (my/get-ai-key "openrouter.ai")))
 
 
-;; (use-package aidermacs
-;;   :ensure t
-;;   :bind (("C-c C-a a" . aidermacs-transient-menu)
-;;          ("C-c C-a r" . aidermacs-run))
-;;   :config
-;;   ;; --- TERMINAL & PROCESS ---
-
-;;   ;; The backend to use. Options: 'vterm (recommended) or 'comint.
-;;   (setq aidermacs-backend 'vterm)
-
-;;   ;; Path to the aider executable. Can be a string "aider" or a list of fallbacks.
-;;   (setq aidermacs-program "aider")
-
-;;   ;; If non-nil, killing the aider session also kills the associated buffer.
-;;   (setq aidermacs-exit-kills-buffer t)
-
-;;   ;; --- MODEL CONFIGURATION ---
-
-;;   ;; The main model used for coding.
-;;   ;; For OpenRouter, use strings like "openrouter/anthropic/claude-3.5-sonnet`'
-;;   ;; The model used specifically for commit messages and chat summarization.
-;;   ;; Using a "weaker" (cheaper/faster) model here saves money.
-;;   (setq aidermacs-weak-model "openrouter/qwen/qwen3.6-plus:free")
-
-;;   ;; In "Architect Mode", this is the high-level reasoning model.
-;;   (setq aidermacs-architect-model "openrouter/qwen/qwen3.6-plus:free")
-
-;;   ;; --- BEHAVIOR & MODES ---
-
-;;   ;; Default chat mode. Options: nil (Code), 'ask, 'architect, or 'help.
-;;   ;; 'architect is highly recommended for complex refactoring.
-;;   (setq aidermacs-default-chat-mode 'architect)
-
-;;   ;; Aider normally commits every change automatically.
-;;   ;; Aidermacs disables this by default (nil) so you can review changes first.
-;;   (setq aidermacs-auto-commits nil)
-
-;;   ;; If using Architect mode, should it automatically apply changes?
-;;   (setq aidermacs-auto-accept-architect nil)
-
-;;   ;; Limit aider to the current directory only (useful in monorepos).
-;;   (setq aidermacs-subtree-only t)
-
-;;   ;; --- UI & REVIEW ---
-
-;;   ;; Use Emacs' built-in Ediff to review changes made by the AI.
-;;   ;; This is one of the best features of the package.
-;;   (setq aidermacs-use-ediff t)
-
-;;   ;; --- ADVANCED / CLI ARGUMENTS ---
-
-;;   ;; Path to a specific YAML config file for aider.
-;;   ;; If set, it ignores most other variable-based configs.
-;;   (setq aidermacs-config-file "~/.aider.conf.yml")
-
-;;   ;; Pass any extra command line arguments directly to the aider process.
-;;   ;; Example: '("--no-auto-commits" "--dark-mode")
-;;   (setq aidermacs-extra-args '())
-
-;;   ;; --- API KEYS (Environment) ---
-
-;;   ;; Aider looks for these environment variables to authenticate.
-;;   (setenv "OPENROUTER_API_KEY" (my/get-ai-key "openrouter.ai")))
 
 
 (provide 'init-ai)
